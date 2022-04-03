@@ -1,0 +1,13 @@
+{
+  "sampleData": {
+    "d978f568-09ff-4b56-9331-6ca58a15078c": {
+      "vars-postalCode": "sample_data/defaultnulltype.json"
+    },
+    "30d691ad-df8d-4011-9997-6a371d3f1bcd": {
+      "payload": "sample_data/list_json.json"
+    },
+    "472b987e-8094-424d-b875-c495a6294380": {
+      "vars-minDistance": "sample_data/weave.dwl"
+    }
+  }
+}

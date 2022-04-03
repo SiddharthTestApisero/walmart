@@ -1,0 +1,11 @@
+https:  
+  X-Rapidapi-Key: "3023a67861msh0eb707c9fd31682p12e9c9jsn4bd95787f3d4"
+  X-Rapidapi-Host: "walmart.p.rapidapi.com"
+  Host: "walmart.p.rapidapi.com"
+  
+dbDetails: 
+  db_name : "testdbc45"
+  username: "c4ebatch5" 
+  password : "c4ebatch@5"
+  hostname : "db4free.net"
+  port : "3306"

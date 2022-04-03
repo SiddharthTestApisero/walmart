@@ -1,0 +1,22 @@
+[
+  {
+    "order_id": "P01",
+    "store_id": "S01",
+    "store_name": "Store1",
+    "store_address": "Pune",
+    "store_distance": 10.0,
+    "store_contact_number": 9879008067,
+    "product_type_id": "TV",
+    "quantity": 1
+  },
+  {
+    "order_id": "P02",
+    "store_id": "S02",
+    "store_name": "Store2",
+    "store_address": "BOM",
+    "store_distance": 12.0,
+    "store_contact_number": 9879777767,
+    "product_type_id": "Mob",
+    "quantity": 2
+  }
+]

@@ -1,0 +1,17 @@
+#%RAML 1.0
+title: walmart-spec
+traits:
+  headertrait: !include headertrait.raml
+/Product:
+    /productDetails:
+      get:
+        is:
+          - headertrait
+        responses:
+          200:
+            description: Get Order and Store details
+            body:
+              application/json:
+                example: !include /productResponse.json
+                  
+

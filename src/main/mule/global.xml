@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+<configuration-properties doc:name="Configuration properties" doc:id="1290534d-dc54-40df-8287-99b64e33a2c5" file="config.yaml" />
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="cb59d0d5-1b8b-4faf-8b3a-780a2da0d27c" >
+		<http:request-connection host="${https.Host}" >
+			<reconnection />
+		</http:request-connection>
+	</http:request-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="a21c8650-e5bb-440f-97a3-c84338b81784" >
+		<db:my-sql-connection host="${dbDetails.hostname}" port="${dbDetails.port}" user="${dbDetails.username}" password="${dbDetails.password}" database="${dbDetails.db_name}"/>
+	</db:config>
+	<configuration doc:name="Configuration" doc:id="a5b02953-dea2-4288-ad8e-8c81dcd2daf9" defaultErrorHandler-ref="globalError_Handler" />
+	<error-handler name="globalError_Handler" doc:id="6c4bdf3f-67a3-4266-acc7-79bc20293a08" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="5e6aaf57-2f2f-4a27-a3d4-4d362e491c39" type="ANY">
+			<set-payload value="#[error.errorMessage]" doc:name="Set Payload" doc:id="77c6115f-78a0-414a-beef-04f5b448261d" />
+		</on-error-propagate>
+	</error-handler>
+
+</mule>
+	

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="getProductDetails" doc:id="4d896fe4-de42-4033-9685-70661f044654" >
+		<logger level="INFO" doc:name="Logger" doc:id="9e0c2dd6-e745-401d-8cee-0162b527bcc9" message="Process Started"/>
+		<http:request method="GET" doc:name="Request" doc:id="aec9d674-d1e9-4853-8304-c6af599fa7e4" url="https://walmart.p.rapidapi.com/products/v3/get-details?usItemId=55885487" outputMimeType="application/json" target="varRes">
+			<ee:repeatable-file-store-stream inMemorySize="1024" />
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"X-RapidAPI-Host" : "walmart.p.rapidapi.com",
+	"X-RapidAPI-Key" : "3023a67861msh0eb707c9fd31682p12e9c9jsn4bd95787f3d4"
+}]]]></http:headers>
+		</http:request>
+		<set-variable value="#[vars.varRes.data.product.location.postalCode]" doc:name="Set PostalCode" doc:id="287b756f-64e5-4609-8583-0bb33ac3f303" variableName="postalCode"/>
+		<http:request method="GET" doc:name="Request" doc:id="17f4a483-0732-4c77-9494-d48e92d081ac" url="https://walmart.p.rapidapi.com/stores/list" target="storesResponse">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"X-RapidAPI-Host" : "walmart.p.rapidapi.com",
+	"X-RapidAPI-Key" : "3023a67861msh0eb707c9fd31682p12e9c9jsn4bd95787f3d4"
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+var postal= vars.postalCode
+---
+{
+	postalCode : postal
+}]]]></http:query-params>
+		</http:request>
+		<set-variable value="#[vars.storesResponse.data.storesBySearchTerm.stores.operationalHours.open24Hours]" doc:name="Set stores24HoursOpen" doc:id="72732d8d-95d0-410f-bf1e-671842afceed" variableName="stores24HoursOpen"/>
+		<choice doc:name="Choice" doc:id="f36fab8b-0f80-40d9-8773-92d47af7d4ce" >
+			<when expression="#[vars.stores24HoursOpen != null]">
+				<set-variable value="#[min(vars.storesResponse.data.storesBySearchTerm.stores.distance)]" doc:name="Set min distance 1" doc:id="3bc9fd89-faf0-4f57-bfd8-185446930248" variableName="minDistance"/>
+				<logger level="INFO" doc:name="Logger" doc:id="aaea0728-3197-4a46-8397-a74c1e7018f0" message="in ifelse"/>
+			</when>
+			<otherwise >
+				<set-variable value="#[min(vars.storesResponse.data.storesBySearchTerm.stores.distance)]" doc:name="Set default min Distance" doc:id="1b81ca9a-d93e-4678-936d-cb197fec393d" variableName="minDistance"/>
+				<logger level="INFO" doc:name="Logger" doc:id="cffe37e5-65ec-4e89-a482-dfb72ab10e91" message="in default"/>
+			</otherwise>
+		</choice>
+		<set-variable value="#[%dw 2.0
+&#10;output application/json
+&#10;var minDistance = vars.minDistance
+&#10;var storeData = vars.storesResponse.data.storesBySearchTerm.stores
+&#10;---
+&#10;storeData filter(item, ind) -&gt; (item.distance == minDistance)]" doc:name="Set deliveryAddressArr" doc:id="a297ecff-329c-4631-8c09-06e6e23141e7" variableName="deliveryAddressArr"/>
+		<set-payload value="#[%dw 2.0
+&#10;output application/json
+&#10;var minDistance = vars.minDistance
+&#10;var storeData = vars.storesResponse.data.storesBySearchTerm.stores
+&#10;---
+&#10;storeData filter(item, ind) -&gt; (item.distance == minDistance)]" doc:name="Set Store Payload" doc:id="564a8105-743e-45a6-bbc9-b5ac8a460d5b" />
+		<set-variable value='#[%dw 2.0
+&#10;output application/json 
+&#10;var address = payload.address.address[0]
+&#10;var city = payload.address.city[0]
+&#10;var state = payload.address.state[0]
+&#10;var country = payload.address.country[0]
+&#10;var postalCode = payload.address.postalCode[0]
+&#10;var separator = ", "
+&#10;var final = address ++ separator ++ city ++ separator ++ state ++ separator ++ country ++ " (" ++ postalCode++")"
+&#10;---
+&#10;final]' doc:name="Set finalDeliveryAddress" doc:id="e4a3dc1d-bea2-4b3b-9df7-12de63e6a916" variableName="finalDeliveryAddress"/>
+		<ee:transform doc:name="Transform Message" doc:id="6e5bb7d7-ae71-420d-b286-f9e00500565a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var finalAddress = vars.finalDeliveryAddress
+var minDist = vars.minDistance
+var productrRes= vars.varRes.data.product
+//var stores =  vars.storesResponse.data.storesBySearchTerm.stores
+---
+{
+	order_id: productrRes.primaryUsItemId as Number,
+	store_id: payload.id[0] as Number,
+	store_name: payload.displayName[0] as String,
+	store_address: finalAddress as String,
+	store_distance: minDist as Number,
+	store_contact_number: 999999 as String,
+	product_type_id: productrRes.productTypeId as String,
+	quantity: productrRes.orderLimit as Number	
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:insert doc:name="Insert" doc:id="6ae63a3a-f918-417d-a7dd-781f318bb1d5" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO Walmart_b61(order_id, store_id, store_name, store_address,store_distance,store_contact_number,product_type_id,quantity)
+VALUES (:order_id, :store_id, :store_name, :store_address,:store_distance,:store_contact_number,:product_type_id,:quantity)
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+  order_id: payload.order_id as Number,
+  store_id: payload.store_id as Number,
+  store_name: payload.store_name,
+  store_address: payload.store_address,
+  store_distance: payload.store_distance as Number,
+  store_contact_number: payload.store_contact_number,
+  product_type_id: payload.product_type_id,
+  quantity: payload.quantity
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="2c8bad72-4002-43fc-b4e8-9e46860a2136" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Data Inserted"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="35821f04-50d5-4b54-939c-699ea7f3bf16" message='#[payload]'/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="HTTP On Error Propagate" doc:id="86ebb34b-86ff-4ac2-8732-36f79fe6c931" type="HTTP:BAD_GATEWAY, HTTP:BAD_REQUEST, HTTP:CLIENT_SECURITY, HTTP:CONNECTIVITY, HTTP:FORBIDDEN, HTTP:INTERNAL_SERVER_ERROR, HTTP:METHOD_NOT_ALLOWED, HTTP:NOT_ACCEPTABLE, HTTP:NOT_FOUND, HTTP:PARSING, HTTP:RETRY_EXHAUSTED, HTTP:SECURITY, HTTP:SERVICE_UNAVAILABLE, HTTP:TIMEOUT, HTTP:TOO_MANY_REQUESTS, HTTP:UNAUTHORIZED, HTTP:UNSUPPORTED_MEDIA_TYPE, EXPRESSION, STREAM_MAXIMUM_SIZE_EXCEEDED">
+				<set-payload value="#[error.errorMessage]" doc:name="Set Payload" doc:id="f7876631-56d8-4d35-8628-a366bd08e23c" />
+			</on-error-propagate>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="DB On Error Propagate" doc:id="c5de4da5-3ad1-4a1b-bdc7-f2ddcca7c942" type="DB:BAD_SQL_SYNTAX, DB:CONNECTIVITY, DB:QUERY_EXECUTION, DB:RETRY_EXHAUSTED">
+				<set-payload value="#[error.errorMessage]" doc:name="Set Payload" doc:id="61f09b23-234b-4328-a39d-773d5ec43d92" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>
