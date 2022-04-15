@@ -35,7 +35,7 @@ var postal= vars.postalCode
 		<set-variable value="#[vars.storesResponse.data.storesBySearchTerm.stores.operationalHours.open24Hours]" doc:name="Set stores24HoursOpen" doc:id="72732d8d-95d0-410f-bf1e-671842afceed" variableName="stores24HoursOpen"/>
 		<choice doc:name="Choice" doc:id="f36fab8b-0f80-40d9-8773-92d47af7d4ce" >
 			<when expression="#[vars.stores24HoursOpen != null]">
-				<set-variable value="#[min(vars.storesResponse.data.storesBySearchTerm.stores.distance)]" doc:name="Set min distance 1" doc:id="3bc9fd89-faf0-4f57-bfd8-185446930248" variableName="minDistance"/>
+				<set-variable value="#[min(vars.storesResponse.data.storesBySearchTerm.stores.distance)]" doc:name="Set min distance" doc:id="3bc9fd89-faf0-4f57-bfd8-185446930248" variableName="minDistance"/>
 				<logger level="INFO" doc:name="Logger" doc:id="aaea0728-3197-4a46-8397-a74c1e7018f0" message="in ifelse"/>
 			</when>
 			<otherwise >
